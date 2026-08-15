@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entrenador V2.2</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101010;color:#f5f5f5;font-family:Arial,sans-serif}
+.app{max-width:1050px;margin:auto;padding:24px}
+h1{margin:0 0 5px;font-size:30px}.sub{color:#999;margin:0 0 22px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{border:1px solid #444;background:#202020;color:#fff;border-radius:10px;padding:11px 14px;cursor:pointer}
+.tab.active{background:#fff;color:#111}
+.page{display:none}.page.active{display:block}
+.card{background:#1b1b1b;border:1px solid #292929;border-radius:16px;padding:20px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+label{display:block;color:#bbb;font-size:14px;margin-bottom:6px}
+input,select,textarea{width:100%;padding:12px;border-radius:9px;border:1px solid #444;background:#292929;color:#fff;font-size:16px}
+textarea{min-height:90px;resize:vertical}
+button{cursor:pointer}.primary{background:#fff;color:#111;border:0;border-radius:10px;padding:12px 18px;font-weight:bold}.secondary{background:#333;color:#fff;border:0;border-radius:10px;padding:12px 18px}
+.status{color:#999;margin-top:10px}
+.hero{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center}
+.photo{width:150px;height:150px;border-radius:18px;background:#292929;border:1px dashed #555;display:flex;align-items:center;justify-content:center;text-align:center;color:#888;overflow:hidden}
+.photo img{width:100%;height:100%;object-fit:cover}
+.kpis{display:flex;flex-wrap:wrap;gap:10px}.kpi{background:#292929;border-radius:12px;padding:14px;min-width:140px}
+.table{width:100%;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid #333;text-align:left}
+.statbox{background:#292929;border-radius:12px;padding:14px;margin:9px 0}
+.score{font-size:34px;font-weight:800;margin:8px 0}.good{color:#9ee493}.warn{color:#ffd166}.bad{color:#ff8c8c}
+.resultgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px;margin-top:10px}
+.video{width:100%;max-height:480px;background:#000;border-radius:12px;margin-top:12px}
+@media(max-width:650px){.hero{grid-template-columns:1fr}.photo{width:120px;height:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>⚽ ENTRENADOR V2.2</h1>
+<p class="sub">Tu centro personal de entrenamiento y análisis.</p>
+
+<div class="tabs">
+<button class="tab active" data-page="profile">👤 Perfil</button>
+<button class="tab" data-page="home">🏠 Inicio</button>
+<button class="tab" data-page="training">🏋️ Entrenamientos</button>
+<button class="tab" data-page="matches">🏟️ Partidos</button>
+<button class="tab" data-page="video">🎥 Análisis de partido</button>
+</div>
+
+<section id="profile" class="page active">
+<div class="card">
+<h2>👤 Perfil del jugador</h2>
+<div class="grid">
+<div><label>Nombre</label><input id="name" placeholder="Tu nombre"></div>
+<div><label>Altura (cm)</label><input id="height" type="number" min="0" placeholder="190"></div>
+<div><label>Peso (kg)</label><input id="weight" type="number" min="0" placeholder="70"></div>
+<div><label>Posición</label><select id="position">
+<option value="">Seleccionar posición</option>
+<option>Arquero</option><option>Defensor central</option><option>Lateral</option>
+<option>Mediocampista defensivo</option><option>Mediocampista central</option>
+<option>Mediocampista ofensivo</option><option>Extremo</option><option>Delantero</option>
+</select></div>
+<div><label>Estilo de jugador</label><input id="style" placeholder="Ej. físico, técnico, rápido"></div>
+<div><label>Objetivo</label><input id="goal" placeholder="Ej. mejorar juego aéreo"></div>
+<div><label>Pierna hábil</label><select id="foot"><option value="">Seleccionar</option><option>Derecha</option><option>Izquierda</option><option>Ambas</option></select></div>
+<div><label>Dorsal</label><input id="number" type="number" min="0" max="99" placeholder="25"></div>
+<div style="grid-column:1/-1"><label>Foto del jugador</label><input id="photoInput" type="file" accept="image/*"></div>
+</div>
+<br>
+<button class="primary" id="saveProfile">Guardar perfil</button>
+<button class="secondary" id="clearProfile">Borrar perfil</button>
+<div id="profileStatus" class="status"></div>
+</div>
+</section>
+
+<section id="home" class="page">
+<div class="card">
+<h2>🏠 Inicio</h2>
+<div class="hero">
+<div id="homePhoto" class="photo">📸<br>Sin foto</div>
+<div><h2 id="homeName">Jugador</h2><p id="homeRole" class="status">Completá tu perfil.</p>
+<div class="kpis" id="homeKpis"></div></div>
+</div>
+</div>
+<div class="card"><h3>🎯 Objetivo</h3><div id="homeGoal">—</div></div>
+<div class="card"><h3>📊 Datos importantes</h3><div id="homeData">—</div></div>
+</section>
+
+<section id="training" class="page">
+<div class="card">
+<h2>🏋️ Estadísticas de entrenamiento</h2>
+<p id="trainingHint" class="status">Elegí una posición en Perfil.</p>
+<div id="trainingFields" class="grid"></div>
+<br><button class="primary" id="calcTraining">Calcular resultado</button>
+<button class="secondary" id="saveTraining">Guardar entrenamiento</button>
+<div id="trainingResult" class="statbox" style="display:none"></div>
+</div>
+<div class="card"><h3>📚 Entrenamientos guardados</h3><div id="trainingHistory">Sin entrenamientos.</div></div>
+</section>
+
+<section id="matches" class="page">
+<div class="card">
+<h2>🏟️ Estadísticas de partido</h2>
+<div class="grid">
+<div><label>Rival</label><input id="opponent" placeholder="Ej. Colegio X"></div>
+<div><label>Resultado</label><input id="result" placeholder="Ej. 2-1"></div>
+<div><label>Minutos jugados</label><input id="minutes" type="number" min="0" placeholder="90"></div>
+</div>
+<p id="matchHint" class="status">Elegí una posición en Perfil.</p>
+<div id="matchFields" class="grid"></div>
+<br><button class="primary" id="calcMatch">Calcular resultado</button>
+<button class="secondary" id="saveMatch">Guardar partido</button>
+<div id="matchResultBox" class="statbox" style="display:none"></div>
+</div>
+<div class="card"><h3>📚 Partidos guardados</h3><div id="matchHistory">Sin partidos.</div></div>
+</section>
+
+<section id="video" class="page">
+<div class="card">
+<h2>🎥 Análisis de partido</h2>
+<p>Subí un video de tu partido para preparar el análisis.</p>
+<input id="videoInput" type="file" accept="video/*">
+<video id="videoPreview" class="video" controls style="display:none"></video>
+<div id="videoInfo" class="status"></div>
+<br><button class="primary" id="analyzeVideo">Analizar partido</button>
+</div>
+<div class="card"><h3>🧠 Resultado</h3><div id="videoResult">Todavía no hay un análisis.</div></div>
+</section>
+</div>
+
+<script>
+const statConfig={
+"Arquero":[["Tiros recibidos","shotsAgainst"],["Tapadas intentadas","saveAttempts"],["Tapadas hechas","saves"],["Goles recibidos","goalsConceded"]],
+"Defensor central":[["Duelos","duelsTotal"],["Duelos ganados","duelsWon"],["Despejes","clearances"],["Intercepciones","interceptions"],["Pases intentados","passesTotal"],["Pases acertados","passesGood"]],
+"Lateral":[["Duelos","duelsTotal"],["Duelos ganados","duelsWon"],["Pases intentados","passesTotal"],["Pases acertados","passesGood"],["Centros intentados","crossesTotal"],["Centros acertados","crossesGood"]],
+"Mediocampista defensivo":[["Duelos","duelsTotal"],["Duelos ganados","duelsWon"],["Pases intentados","passesTotal"],["Pases acertados","passesGood"],["Intercepciones","interceptions"],["Recuperaciones","recoveries"]],
+"Mediocampista central":[["Pases intentados","passesTotal"],["Pases acertados","passesGood"],["Duelos","duelsTotal"],["Duelos ganados","duelsWon"],["Regates intentados","dribblesTotal"],["Regates completados","dribblesGood"],["Tiros intentados","shotsTotal"],["Tiros al arco","shotsOnTarget"]],
+"Mediocampista ofensivo":[["Pases intentados","passesTotal"],["Pases acertados","passesGood"],["Regates intentados","dribblesTotal"],["Regates completados","dribblesGood"],["Tiros intentados","shotsTotal"],["Tiros al arco","shotsOnTarget"],["Asistencias","assists"]],
+"Extremo":[["Regates intentados","dribblesTotal"],["Regates completados","dribblesGood"],["Centros intentados","crossesTotal"],["Centros acertados","crossesGood"],["Tiros intentados","shotsTotal"],["Tiros al arco","shotsOnTarget"],["Pases clave","keyPasses"]],
+"Delantero":[["Tiros intentados","shotsTotal"],["Tiros al arco","shotsOnTarget"],["Goles","goals"],["Regates intentados","dribblesTotal"],["Regates completados","dribblesGood"],["Duelos","duelsTotal"],["Duelos ganados","duelsWon"]]
+};
+
+const $=id=>document.getElementById(id);
+const profileKey="v22_profile", sessionsKey="v22_sessions";
+function getProfile(){return JSON.parse(localStorage.getItem(profileKey)||"null")}
+function getSessions(){return JSON.parse(localStorage.getItem(sessionsKey)||"[]")}
+function saveSessions(x){localStorage.setItem(sessionsKey,JSON.stringify(x))}
+function show(page){
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ $(page).classList.add("active");
+ document.querySelector(`.tab[data-page="${page}"]`).classList.add("active");
+ renderAll();
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>show(b.dataset.page)));
+
+function saveProfile(){
+ const p={
+  name:$("name").value.trim(),height:+$("height").value||0,weight:+$("weight").value||0,
+  position:$("position").value,style:$("style").value.trim(),goal:$("goal").value.trim(),
+  foot:$("foot").value,number:$("number").value,photo:localStorage.getItem("v22_photo")||""
+ };
+ localStorage.setItem(profileKey,JSON.stringify(p));
+ $("profileStatus").textContent="✅ Perfil guardado correctamente.";
+ buildFields();renderAll();
+}
+$("saveProfile").onclick=saveProfile;
+
+$("clearProfile").onclick=()=>{
+ localStorage.removeItem(profileKey);localStorage.removeItem("v22_photo");
+ ["name","height","weight","style","goal","number"].forEach(id=>$(id).value="");
+ $("position").value="";$("foot").value="";$("photoInput").value="";
+ $("profileStatus").textContent="Perfil borrado.";
+ buildFields();renderAll();
+};
+
+$("photoInput").onchange=e=>{
+ const file=e.target.files[0];if(!file)return;
+ const r=new FileReader();r.onload=()=>{localStorage.setItem("v22_photo",r.result);renderAll()};r.readAsDataURL(file);
+};
+
+function loadProfile(){
+ const p=getProfile();if(!p)return;
+ $("name").value=p.name||"";$("height").value=p.height||"";$("weight").value=p.weight||"";
+ $("position").value=p.position||"";$("style").value=p.style||"";$("goal").value=p.goal||"";
+ $("foot").value=p.foot||"";$("number").value=p.number||"";
+}
+
+function buildFields(){
+ const p=getProfile(), pos=p?.position||"";
+ $("trainingHint").textContent=pos?"Estadísticas adaptadas a "+pos+".":"Elegí una posición en Perfil.";
+ $("matchHint").textContent=pos?"Estadísticas adaptadas a "+pos+".":"Elegí una posición en Perfil.";
+ ["trainingFields","matchFields"].forEach(cid=>{
+  const c=$(cid);c.innerHTML="";
+  (statConfig[pos]||[]).forEach(([label,key])=>{
+   c.innerHTML+=`<div><label>${label}</label><input type="number" min="0" data-stat="${key}" class="${cid}Stat"></div>`;
+  });
+ });
+}
+
+$("position").onchange=buildFields;
+
+function readStats(cid){
+ const obj={};document.querySelectorAll("#"+cid+" input[data-stat]").forEach(i=>obj[i.dataset.stat]=+i.value||0);return obj;
+}
+
+function scoreForPosition(position, stats){
+ const rules={
+  "Arquero":[
+   ["Tapadas",stats.saves,stats.saveAttempts,30],
+   ["Goles recibidos",Math.max(0,5-(stats.goalsConceded||0))*20,100,25],
+   ["Volumen de tiros",Math.min(stats.shotsAgainst||0,10)*10,100,15],
+   ["Tapadas/tiros",stats.saveAttempts?(stats.saves/stats.saveAttempts)*100:0,100,30]
+  ],
+  "Defensor central":[
+   ["Duelos",stats.duelsTotal?(stats.duelsWon/stats.duelsTotal)*100:0,100,30],
+   ["Pases",stats.passesTotal?(stats.passesGood/stats.passesTotal)*100:0,100,25],
+   ["Despejes",Math.min(stats.clearances||0,10)*10,100,25],
+   ["Intercepciones",Math.min(stats.interceptions||0,8)*12.5,100,20]
+  ],
+  "Lateral":[
+   ["Duelos",stats.duelsTotal?(stats.duelsWon/stats.duelsTotal)*100:0,100,25],
+   ["Pases",stats.passesTotal?(stats.passesGood/stats.passesTotal)*100:0,100,25],
+   ["Centros",stats.crossesTotal?(stats.crossesGood/stats.crossesTotal)*100:0,100,25],
+   ["Actividad",Math.min((stats.dribblesTotal||0)+(stats.crossesTotal||0),15)/15*100,100,25]
+  ],
+  "Mediocampista defensivo":[
+   ["Duelos",stats.duelsTotal?(stats.duelsWon/stats.duelsTotal)*100:0,100,25],
+   ["Pases",stats.passesTotal?(stats.passesGood/stats.passesTotal)*100:0,100,35],
+   ["Intercepciones",Math.min(stats.interceptions||0,8)*12.5,100,20],
+   ["Recuperaciones",Math.min(stats.recoveries||0,12)/12*100,100,20]
+  ],
+  "Mediocampista central":[
+   ["Pases",stats.passesTotal?(stats.passesGood/stats.passesTotal)*100:0,100,30],
+   ["Duelos",stats.duelsTotal?(stats.duelsWon/stats.duelsTotal)*100:0,100,15],
+   ["Regates",stats.dribblesTotal?(stats.dribblesGood/stats.dribblesTotal)*100:0,100,20],
+   ["Tiros",stats.shotsTotal?(stats.shotsOnTarget/stats.shotsTotal)*100:0,100,15],
+   ["Producción",Math.min((stats.assists||0)*25+(stats.shotsOnTarget||0)*8,100),100,20]
+  ],
+  "Mediocampista ofensivo":[
+   ["Pases",stats.passesTotal?(stats.passesGood/stats.passesTotal)*100:0,100,20],
+   ["Regates",stats.dribblesTotal?(stats.dribblesGood/stats.dribblesTotal)*100:0,100,20],
+   ["Tiros",stats.shotsTotal?(stats.shotsOnTarget/stats.shotsTotal)*100:0,100,20],
+   ["Asistencias",Math.min((stats.assists||0)*25,100),100,20],
+   ["Producción",Math.min((stats.keyPasses||0)*15+(stats.goals||0)*30,100),100,20]
+  ],
+  "Extremo":[
+   ["Regates",stats.dribblesTotal?(stats.dribblesGood/stats.dribblesTotal)*100:0,100,25],
+   ["Centros",stats.crossesTotal?(stats.crossesGood/stats.crossesTotal)*100:0,100,20],
+   ["Tiros",stats.shotsTotal?(stats.shotsOnTarget/stats.shotsTotal)*100:0,100,20],
+   ["Pases clave",Math.min((stats.keyPasses||0)*15,100),100,15],
+   ["Producción",Math.min((stats.goals||0)*30+(stats.assists||0)*25,100),100,20]
+  ],
+  "Delantero":[
+   ["Tiros",stats.shotsTotal?(stats.shotsOnTarget/stats.shotsTotal)*100:0,100,25],
+   ["Goles",Math.min((stats.goals||0)*25,100),100,30],
+   ["Regates",stats.dribblesTotal?(stats.dribblesGood/stats.dribblesTotal)*100:0,100,15],
+   ["Duelos",stats.duelsTotal?(stats.duelsWon/stats.duelsTotal)*100:0,100,15],
+   ["Producción",Math.min((stats.goals||0)*30+(stats.assists||0)*20,100),100,15]
+  ]
+ };
+ const selected=rules[position]||[];
+ const items=selected.map(([label,val,,weight])=>({label,value:Math.max(0,Math.min(100,val||0)),weight}));
+ const totalWeight=items.reduce((a,x)=>a+x.weight,0)||1;
+ const score=items.reduce((a,x)=>a+x.value*x.weight,0)/totalWeight;
+ return {score,items};
+}
+function grade(score){
+ if(score>=90)return ["Excelente","good"];
+ if(score>=80)return ["Muy bueno","good"];
+ if(score>=70)return ["Bueno","warn"];
+ if(score>=60)return ["A mejorar","warn"];
+ return ["Necesita trabajo","bad"];
+}
+function renderResult(boxId, position, stats){
+ const r=scoreForPosition(position,stats), [g,c]=grade(r.score);
+ const sorted=[...r.items].sort((a,b)=>a.value-b.value);
+ const weak=sorted[0], strong=sorted[sorted.length-1];
+ $(boxId).style.display="block";
+ $(boxId).innerHTML=`<div class="score">${r.score.toFixed(0)}/100</div>
+ <strong class="${c}">${g}</strong>
+ <div class="resultgrid">${r.items.map(x=>`<div class="statbox"><strong>${x.label}</strong><br>${x.value.toFixed(0)}/100</div>`).join("")}</div>
+ <p>🟢 <strong>Fortaleza:</strong> ${strong.label}</p>
+ <p>🔴 <strong>A mejorar:</strong> ${weak.label}</p>
+ <p>🎯 <strong>Recomendación:</strong> trabajar ${weak.label.toLowerCase()} en las próximas sesiones.</p>`;
+ return r.score;
+}
+
+function saveSession(type){
+ const p=getProfile();if(!p||!p.position){alert("Primero guardá tu perfil y elegí una posición.");return}
+ const container=type==="training"?"trainingFields":"matchFields";
+ const stats=readStats(container);
+ const result=scoreForPosition(p.position,stats);
+ const s={id:Date.now(),type,date:new Date().toLocaleDateString("es-PY"),position:p.position,stats,score:+result.score.toFixed(1)};
+ if(type==="match")Object.assign(s,{opponent:$("opponent").value.trim(),result:$("result").value.trim(),minutes:+$("minutes").value||0});
+ const all=getSessions();all.push(s);saveSessions(all);
+ if(type==="training")renderResult("trainingResult",p.position,stats);
+ else renderResult("matchResultBox",p.position,stats);
+ alert(type==="training"?"Entrenamiento guardado con resultado.":"Partido guardado con resultado.");
+ renderAll();
+}
+
+$("saveTraining").onclick=()=>saveSession("training");
+$("saveMatch").onclick=()=>saveSession("match");
+
+function history(type){
+ const arr=getSessions().filter(x=>x.type===type).reverse();
+ if(!arr.length)return "<p class='status'>Sin registros todavía.</p>";
+ return arr.map(s=>{
+  const values=Object.entries(s.stats).map(([k,v])=>`${k}: ${v}`).join(" · ");
+  return `<div class="statbox"><strong>${s.date}</strong>${s.opponent?" — "+s.opponent:""}${s.result?" | "+s.result:""}<br><span class="status">${values}</span></div>`;
+ }).join("");
+}
+
+function renderHome(){
+ const p=getProfile();
+ if(!p){$("homeName").textContent="Jugador";$("homeRole").textContent="Completá tu perfil."; $("homePhoto").innerHTML="📸<br>Sin foto";$("homeKpis").innerHTML="";$("homeGoal").textContent="—";$("homeData").textContent="—";return}
+ $("homeName").textContent=(p.name||"Jugador")+(p.number?` #${p.number}`:"");
+ $("homeRole").textContent=[p.position,p.style].filter(Boolean).join(" · ")||"Perfil incompleto";
+ $("homePhoto").innerHTML=p.photo?`<img src="${p.photo}">`:"📸<br>Sin foto";
+ $("homeKpis").innerHTML=`${p.height?`<div class="kpi">📏 ${p.height} cm</div>`:""}${p.weight?`<div class="kpi">⚖️ ${p.weight} kg</div>`:""}${p.foot?`<div class="kpi">🦶 ${p.foot}</div>`:""}`;
+ $("homeGoal").textContent=p.goal||"Sin objetivo definido.";
+ $("homeData").textContent=`Estilo: ${p.style||"—"} | Posición: ${p.position||"—"} | Dorsal: ${p.number||"—"}`;
+}
+function renderAll(){
+ $("trainingHistory").innerHTML=history("training");
+ $("matchHistory").innerHTML=history("match");
+ renderHome();
+}
+$("videoInput").onchange=e=>{
+ const file=e.target.files[0];if(!file)return;
+ $("videoInfo").textContent=`Video cargado: ${file.name} — ${(file.size/1024/1024).toFixed(1)} MB`;
+ const url=URL.createObjectURL(file);$("videoPreview").src=url;$("videoPreview").style.display="block";
+};
+$("analyzeVideo").onclick=()=>{
+ if(!$("videoInput").files[0]){alert("Primero subí un video.");return}
+ $("videoResult").innerHTML=`<div class="statbox"><strong>🎥 Video recibido.</strong><br>La interfaz de V2.2 ya puede recibir y reproducir tu video. El análisis automático de jugadas todavía requiere un motor de visión; no voy a fingir resultados que la aplicación no haya calculado realmente.</div>`;
+};
+$("calcTraining").onclick=()=>{
+ const p=getProfile();if(!p||!p.position){alert("Primero guardá tu perfil y elegí una posición.");return}
+ renderResult("trainingResult",p.position,readStats("trainingFields"));
+};
+$("calcMatch").onclick=()=>{
+ const p=getProfile();if(!p||!p.position){alert("Primero guardá tu perfil y elegí una posición.");return}
+ renderResult("matchResultBox",p.position,readStats("matchFields"));
+};
+loadProfile();buildFields();renderAll();
+</script>
+</body>
+</html>
